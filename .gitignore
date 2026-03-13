@@ -50,3 +50,6 @@ next-env.d.ts
 
 # Claude
 .claude/
+
+# Prisma v7 leftover (using v5)
+prisma.config.ts
