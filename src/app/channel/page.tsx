@@ -2,35 +2,25 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
 
-export default function Home() {
-  const { user, loading } = useAuth();
+export default function ChannelIndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.replace('/login');
-      return;
-    }
-    // Redirect to first available channel
-    async function redirectToChannel() {
+    async function redirect() {
       const res = await fetch('/api/channels');
       if (res.ok) {
         const data = await res.json();
         if (data.channels && data.channels.length > 0) {
           router.replace(`/channel/${data.channels[0].id}`);
-        } else {
-          router.replace('/channel');
         }
       }
     }
-    redirectToChannel();
-  }, [user, loading, router]);
+    redirect();
+  }, [router]);
 
   return (
-    <div className="flex h-screen items-center justify-center bg-[#1a1d21]">
+    <div className="flex-1 flex items-center justify-center bg-[#1a1d21]">
       <div className="w-8 h-8 border-2 border-[#4A154B] border-t-transparent rounded-full animate-spin" />
     </div>
   );

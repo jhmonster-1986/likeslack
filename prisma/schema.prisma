@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  avatar    String?
+  status    String   @default("online")
+  createdAt DateTime @default(now())
+
+  messages       Message[]
+  reactions      Reaction[]
+  channelMembers ChannelMember[]
+  dmMembers      DMChannelMember[]
+  ownedChannels  Channel[]         @relation("ChannelOwner")
+}
+
+model Channel {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isPrivate   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  ownerId     String
+  owner       User     @relation("ChannelOwner", fields: [ownerId], references: [id])
+  members     ChannelMember[]
+  messages    Message[]
+}
+
+model ChannelMember {
+  channelId String
+  userId    String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, userId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  channelId   String?
+  dmChannelId String?
+  parentId    String?
+
+  user      User       @relation(fields: [userId], references: [id])
+  channel   Channel?   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  dmChannel DMChannel? @relation(fields: [dmChannelId], references: [id], onDelete: Cascade)
+  parent    Message?   @relation("ThreadReplies", fields: [parentId], references: [id])
+  replies   Message[]  @relation("ThreadReplies")
+  reactions Reaction[]
+  files     FileAttachment[]
+}
+
+model Reaction {
+  id        String  @id @default(cuid())
+  emoji     String
+  messageId String
+  userId    String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId, emoji])
+}
+
+model DMChannel {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  members   DMChannelMember[]
+  messages  Message[]
+}
+
+model DMChannelMember {
+  dmChannelId String
+  userId      String
+  dmChannel   DMChannel @relation(fields: [dmChannelId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([dmChannelId, userId])
+}
+
+model FileAttachment {
+  id        String  @id @default(cuid())
+  name      String
+  url       String
+  size      Int
+  type      String
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
